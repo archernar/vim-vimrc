@@ -10,3 +10,6 @@ I will permit the buffers to pass over me and through my registers.\
 And when the macros have gone past, I will turn the inner eye to see their path.\
 Where the bloated IDEs and modern forks have gone, there will be nothing.\
 Only pure Vim will remain.
+<br>
+<br>
+<img src="vimlan.jpg" alt="Description" hspace="20" />
