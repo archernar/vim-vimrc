@@ -11,7 +11,7 @@ And when the screens have gone past, I will turn the inner eye to see their path
 Where the bloated IDEs and modern editors have gone, there will be nothing.\
 Only pure Vim will remain.
 
-<br>
+
 **The Rhythm of the Keystroke**
 <br>
 
@@ -39,7 +39,7 @@ The ultimate benefit of Vim is the reduction of friction. When your hands never 
 
 Ultimately, it’s not about proving our technical purity. It’s about the quiet satisfaction of finding your rhythm—that moment when the interface simply fades away, and nothing stands between you and the work.
 
+<br>
+<br>
 
-<br>
-<br>
 <img src="vimland.jpg" alt="Description" hspace="20" />
