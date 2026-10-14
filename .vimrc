@@ -136,7 +136,7 @@ if !exists("NOVUNDLE")
     "Bundle 'Lokaltog/vim-monotone.git'
     "Bundle 'owickstrom/vim-colors-paramount'
     Plugin 'tpope/vim-surround'
-    Plugin 'vim-airline/vim-airline'
+"    Plugin 'vim-airline/vim-airline'
     " Plugin 'tpope/vim-fugitive'
     " Plugin 'vim-airline/vim-airline-themes'
     " Plugin 'jeetsukumaran/vim-buffergator'
