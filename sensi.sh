@@ -18,6 +18,43 @@ declare -A PATTERNS=(
     ["Database URI"]="(?i)(mongodb(?:\+srv)?|postgres(?:ql)?|mysql)://[^:]+:[^@\s]+@"
     ["Bearer/JWT Token"]="(?i)bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+"
     ["Generic Secret"]="(?i)(api[_-]?key|secret|token|passwd|password)\s*[:=]\s*['\"]?(?!true|false|null)([A-Za-z0-9\-_+=/]{8,})['\"]?"
+    ["Private Key"]="-----BEGIN (RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY( BLOCK)?-----"
+    ["Database URI"]="(?i)\b(mongodb(\+srv)?|postgres(ql)?|mysql|mariadb|mssql|sqlserver|redis|rediss|amqps?|ftp|sftp)://[^:/\s]+:[^@\s]+@"
+    ["Bearer/JWT Token"]="\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+    ["Generic Secret"]="(?i)['\"]?[A-Za-z0-9_.-]*(api[_-]?key|secret|token|passwd|password|pwd|credential|auth[_-]?key)[A-Za-z0-9_.-]*['\"]?\s*[:=]>?\s*['\"]?(?!(true|false|null|none|nil|undefined)\b)[^\s'\"<>\$\{\(]{8,}"
+    ["AWS Temp/IAM Key ID"]="\b(ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA)[0-9A-Z]{16}\b"
+    ["AWS Secret Key"]="(?i)aws.{0,20}(secret|sk).{0,20}['\"][0-9a-zA-Z/+]{40}['\"]"
+    ["Google API Key"]="AIza[0-9A-Za-z_-]{35}"
+    ["Google OAuth Client Secret"]="GOCSPX-[A-Za-z0-9_-]{28}"
+    ["GCP Service Account JSON"]="\"type\"\s*:\s*\"service_account\""
+    ["Azure Storage Key"]="AccountKey=[A-Za-z0-9+/]{86}=="
+    ["Azure SAS Signature"]="[?&]sig=[A-Za-z0-9%]{43,}%3D"
+    ["DigitalOcean Token"]="dop_v1_[a-f0-9]{64}"
+    ["Terraform Cloud Token"]="\b[A-Za-z0-9]{14}\.atlasv1\.[A-Za-z0-9_-]{60,}"
+    ["GitHub Fine-Grained PAT"]="github_pat_[A-Za-z0-9_]{22,}"
+    ["GitLab PAT"]="glpat-[A-Za-z0-9_-]{20}"
+    ["npm Token"]="npm_[A-Za-z0-9]{36}"
+    ["PyPI Token"]="pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}"
+    ["Docker Config Auth"]="\"auth\"\s*:\s*\"[A-Za-z0-9+/=]{20,}\""
+    ["Slack Token"]="xox[baprs]-[0-9A-Za-z-]{10,}"
+    ["Slack Webhook"]="https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+"
+    ["Discord Webhook"]="https://(ptb\.|canary\.)?discord(app)?\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+"
+    ["Stripe Live Key"]="\b[sr]k_live_[0-9A-Za-z]{24,}\b"
+    ["Twilio Key/SID"]="\b(SK|AC)[0-9a-f]{32}\b"
+    ["SendGrid Key"]="SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}"
+    ["Mailgun Key"]="\bkey-[0-9a-f]{32}\b"
+    ["Shopify Token"]="shp(at|ca|pa|ss)_[a-fA-F0-9]{32}"
+    ["Square Token"]="sq0(atp|csp)-[0-9A-Za-z_-]{22,43}"
+    ["Telegram Bot Token"]="\b[0-9]{8,10}:AA[0-9A-Za-z_-]{33}\b"
+    ["OpenAI Key"]="\bsk-(proj-)?[A-Za-z0-9_-]{32,}"
+    ["Anthropic Key"]="sk-ant-[A-Za-z0-9_-]{80,}"
+    ["Basic Auth in URL"]="https?://[^/\s:@]+:[^/\s:@]+@[^/\s]+"
+    ["Authorization Header"]="(?i)authorization['\"]?\s*[:=]\s*['\"]?(basic|bearer)\s+[A-Za-z0-9+/=._-]{10,}"
+    ["Connection String Password"]="(?i)\b(pwd|password)=[^;\s'\"]{4,};"
+    ["netrc Credentials"]="machine\s+\S+\s+login\s+\S+\s+password\s+\S+"
+    ["PuTTY Private Key"]="PuTTY-User-Key-File-[0-9]:"
+    ["US SSN"]="\b(?!000|666|9\d\d)\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b"
+    ["Credit Card"]="\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b"
 )
 
 GLOBAL_FAIL=0
@@ -33,6 +70,7 @@ for TARGET in "$@"; do
     FILE_FAIL=0
 
     for desc in "${!PATTERNS[@]}"; do
+        echo -n "$desc,"
         regex="${PATTERNS[$desc]}"
 
         # -P: Perl-compatible regex
