@@ -26,12 +26,10 @@ set nostartofline                 " Stop certain movements from always going to 
 set laststatus=2                  " Always display the status line, even if only 1 window is displayed
 set noswapfile
 set nobackup
-set undodir=~/.vim/undodir
-set undofile
 set colorcolumn=104
 set background=dark
 set laststatus=2                  " For Status Line
-set t_Co=256                      " For Status Line
+set t_Co=256                     " For Status Line , termguicolors set below
 
 " set relativenumber
 " set signcolumn=yes
@@ -63,7 +61,15 @@ set smartindent
 " *****************************************************************************************************
                 " Syntax Highlighting
                 " *************************************************************************************
-syntax off
+" Enable syntax globally so Airline can build its color groups
+syntax enable
+
+" Automatically disable syntax highlighting locally for all opened files
+augroup DisableBufferSyntax
+    autocmd!
+    " Fire AFTER Vim detects the filetype to ensure it stays off
+    autocmd FileType * setlocal syntax=
+augroup END
 
 set confirm                       " Instead of failing a command because of unsaved changes,
                                   " raise a dialogue asking to save changed files.
@@ -121,7 +127,7 @@ filetype off
 if !exists("NOVUNDLE")
     set rtp+=~/.vim/bundle/Vundle.vim
     call vundle#begin()
-    " Plugin 'VundleVim/Vundle.vim'
+    Plugin 'VundleVim/Vundle.vim'
     Plugin 'archernar/vim-utils'
     Plugin 'archernar/vim-flashcard'
     Plugin 'archernar/vim-dir'
@@ -131,12 +137,12 @@ if !exists("NOVUNDLE")
     Plugin 'archernar/vim-program'
     Plugin 'archernar/vim-monochrome'
     Plugin 'archernar/vim-mru'
-    Plugin 'lifepillar/vim-solarized8'
+    "Plugin 'lifepillar/vim-solarized8'
     "Plugin 'gruvbox-community/gruvbox'
     "Bundle 'Lokaltog/vim-monotone.git'
     "Bundle 'owickstrom/vim-colors-paramount'
     Plugin 'tpope/vim-surround'
-"    Plugin 'vim-airline/vim-airline'
+    Plugin 'vim-airline/vim-airline'
     " Plugin 'tpope/vim-fugitive'
     " Plugin 'vim-airline/vim-airline-themes'
     " Plugin 'jeetsukumaran/vim-buffergator'
@@ -259,7 +265,7 @@ function! g:HelpPopUp()
 endfunction
 
 func MyFilter100(winid, key)
-      let l:MAX=3
+      let l:MAX=5
       if a:key ==# "\<Esc>"
 	    call popup_close(a:winid)
 	    return 1
@@ -557,11 +563,12 @@ call g:CommanderStr(4, "--- Notes")
 call g:CommanderText(4, "*", "Forward Find Whole Word")
 call g:CommanderText(4, "#", "Backward Find Whole Word")
 
-call g:CommanderStr(4, "--- Register a Commands")
-call g:Commander(4, "<leader>a  :normal <DQ>ayy<CR>",  "+a  - clear and yank to regA")
-call g:Commander(4, "<leader>y  :normal DOUBLEQUOTEAyy<CR>",  "+y  - append yank to regA")
-call g:Commander(4, "<leader>p  :normal DOUBLEQUOTEap<CR>",   "+p  - paste regA")
-call g:CommanderSpace(4)
+" call g:CommanderStr(4, "--- Register a Commands")
+" call g:Commander(4, "<leader>a  :normal! \"ayy<CR>",  "+a  - clear and yank to regA")
+" call g:Commander(4, "<leader>y  :normal! \"Ayy<CR>",  "+y  - append yank to regA")
+" call g:Commander(4, "<leader>p  :normal! \"ap<CR>",   "+p  - paste regA")
+" call g:CommanderSpace(4)
+
 call g:CommanderStr( 4, "--- Current Line")
 call g:CommanderText(4, "zz","Center")
 call g:CommanderText(4, "zt","Top")
@@ -694,38 +701,33 @@ command!  EPALM         normal!  a<Char-0x0270B>
 command!  ETHUMBUP      normal!  a<Char-0x1F44D>
 command!  ETHUMBDN      normal!  a<Char-0x1F44E>
 
-" Plugin 'lifepillar/vim-solarized8'
-" Enable true color (24-bit) support
-if (has("termguicolors"))
-  set termguicolors
-endif
 " https://vimawesome.com/plugin/solarized-8
+" Plugin 'lifepillar/vim-solarized8'
+" colorscheme solarized8_high
 " Tell Vim to optimize colors for a dark terminal background
 set background=dark
-colorscheme solarized8_high
-
-
 
 " command! -nargs=+ GBASH execute 'r ! /home/mestes/center/gbash.sh -bash ' . shellescape(<q-args>)
 " Function to send visual selection to Gemini and open in a new split
 function! GeminiAnalyze(line1, line2, prompt)
-  " 1. Yank the visually selected lines
-  execute a:line1 . ',' . a:line2 . 'yank'
+  " 1. Yank the visually selected lines explicitly into the unnamed register
+  execute a:line1 . ',' . a:line2 . 'yank ""'
   
-  " 2. Open a new vertical split (as a scratch buffer so it doesn't ask to save)
+  " 2. Open a new vertical split (scratch buffer)
   vnew
   setlocal buftype=nofile bufhidden=wipe noswapfile
   
-  " 3. Paste the yanked code into the new buffer
-  put
+  " 3. Paste the yanked code explicitly from the unnamed register
+  put ""
   
   " 4. Remove the empty first line created by 'put'
   1d
   
-  " 5. Filter this new buffer through your Bash script
-  " shellescape() ensures your prompt text is safely passed to the shell
-  execute '%!/home/mestes/vggs ' . shellescape(a:prompt)
+  " 5. Filter this new buffer through the Bash script using a dynamic path
+  let l:script_path = expand('~/vggs')
+  execute '%!' . l:script_path . ' ' . shellescape(a:prompt)
 endfunction
+
 
 " Create a custom command :Gemini that calls the function
 command! -range -nargs=* Gemini call GeminiAnalyze(<line1>, <line2>, <q-args>)
@@ -740,14 +742,14 @@ command! -range -nargs=* Gemini call GeminiAnalyze(<line1>, <line2>, <q-args>)
 " Required for airline statusline to display
 set laststatus=2
 
-" --- Fix 24-bit True Color inside Tmux ---
-if &term =~# 'screen' || &term =~# 'tmux'
-  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-endif
-
+" --- Terminal & Tmux True Color Setup ---
 if has('termguicolors')
   set termguicolors
+  " Fix 24-bit True Color inside Tmux
+  if &term =~# 'screen' || &term =~# 'tmux'
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  endif
 endif
 
 " --- Vim-Airline Settings ---
@@ -787,8 +789,8 @@ function! InsertFunctionHeader()
         " Split the arguments by comma
         let l:raw_args = split(l:args_str, ',')
         for l:arg in l:raw_args
-            " Trim leading and trailing whitespace from each argument
-            let l:clean_arg = substitute(l:arg, '^\s*\(.\{-}\)\s*$', '\1', '')
+            " Trim leading and trailing whitespace from each argument using Vim 8 native function
+            let l:clean_arg = trim(l:arg)
             if !empty(l:clean_arg)
                 call add(l:args_list, l:clean_arg)
             endif
