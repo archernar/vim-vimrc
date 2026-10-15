@@ -87,9 +87,10 @@ set notimeout ttimeout ttimeoutlen=200  " Quickly time out on keycodes, but neve
                 " *************************************************************************************
 command! MyLinter :caddexpr system("cat zzzz") | copen
 command! ZZZZ :caddexpr system("cat zzzz") | copen
-map <C-j> :cn<CR>
-map <C-k> :cp<CR>
-map <C-@> @a
+nnoremap <C-j> :cn<CR>
+nnoremap <C-k> :cp<CR>
+nnoremap <C-@> @a
+
 
 "  :copen " Open the quickfix window
 "  :ccl   " Close it
@@ -494,11 +495,10 @@ call g:Commander(0, "<leader>b :bnext<CR>",                     "+b  - Next buff
 call g:Commander(0, "<leader>k :bprev<CR>",                     "+k  - Previous buffer")
 call g:Commander(0, "<leader>d :bdelete<CR>",                   "+d  - Close buffer")
 call g:Commander(0, "<leader>t :tabnew<CR>",                    "+t  - New tab")
-
 " --- Window (Split) Management ---
-call g:Commander(1, "<leader>vs  :call g:HSplit(2)<CR>",  "+vs     - Vertical split")
-call g:Commander(1, "<leader>hs  :call g:VSplit(2)<CR>",  "+hs     - Horizontal split")
-call g:Commander(1, "<leader>ss  :call g:VSplit(2)<CR>",  "+ss     - Horizontal split")
+call g:Commander(1, "<leader>vs  :call g:VSplit(2)<CR>",  "+vs     - Vertical split")
+call g:Commander(1, "<leader>hs  :call g:HSplit(2)<CR>",  "+hs     - Horizontal split")
+call g:Commander(1, "<leader>ss  :call g:HSplit(2)<CR>",  "+ss     - Horizontal split")
 call g:Commander(1, "<leader>ns  :call g:NoSplits()<CR>", "+ns     - Close all splits")
 call g:Commander(1, "<leader>as  :call g:SplitBuffers()<CR>", "+ss     - All splits")
 call g:CommanderSpace(1)
@@ -587,13 +587,14 @@ call g:Commander(4, "command! -nargs=0 TOPs    call TopInclude('~/.vim/vimsetup/
 call g:Commander(4, "command! -nargs=0 INC     call FilePopUp($HOME . '/.vim/vimsetup/includerfiles.txt', 'Includers','IncluderPopUpCustomFilter','IncluderCallBack')", "TOPS")
 call g:Commander(4, "command! -nargs=0 HE      call FilePopUp($HOME . '/.vim/vimsetup/vim.md', 'vim.md','FileUpCustomFilter','')", "vim.md")
 call g:CommanderSpace(4)
+
 call g:CommanderStr(4, "--- Git Commands")
-call g:Commander(4, "<leader>gaf  :!git add %<CR>",                                         "+gaf  - git add")
-call g:Commander(4, "<leader>gac  :!git add % && git commit -m 'Staged changes' <CR>",      "+gac  - git add   + commit")
-call g:Commander(4, "<leader>gaa  :!git add .<CR>",                                         "+gaa  - git add .")
-call g:Commander(4, "<leader>gss  :!git add . && git commit -m 'Staged all changes' <CR>",  "+gss  - git add . + commit")
-call g:Commander(4, "<leader>gas  :!git add %<CR>:!git status<CR>",                         "+gas  - git add   + status")
-call g:Commander(4, "<leader>gaas :!git add .<CR>:!git status<CR>",                         "+gaas - git add . + status")
+call g:Commander(4, "<leader>gaf  :silent !git add %<CR>:redraw!<CR>",                                         "+gaf  - git add")
+call g:Commander(4, "<leader>gac  :silent !git add % && git commit -m 'Staged changes'<CR>:redraw!<CR>",       "+gac  - git add   + commit")
+call g:Commander(4, "<leader>gaa  :silent !git add .<CR>:redraw!<CR>",                                         "+gaa  - git add .")
+call g:Commander(4, "<leader>gss  :silent !git add . && git commit -m 'Staged all changes'<CR>:redraw!<CR>",   "+gss  - git add . + commit")
+call g:Commander(4, "<leader>gas  :silent !git add %<CR>:silent !git status<CR>:redraw!<CR>",                  "+gas  - git add   + status")
+call g:Commander(4, "<leader>gaas :silent !git add .<CR>:silent !git status<CR>:redraw!<CR>",                  "+gaas - git add . + status")
 call g:CommanderSpace(4)
 
 
@@ -710,22 +711,23 @@ set background=dark
 " command! -nargs=+ GBASH execute 'r ! /home/mestes/center/gbash.sh -bash ' . shellescape(<q-args>)
 " Function to send visual selection to Gemini and open in a new split
 function! GeminiAnalyze(line1, line2, prompt)
-  " 1. Yank the visually selected lines explicitly into the unnamed register
-  execute a:line1 . ',' . a:line2 . 'yank ""'
+  " 1. Extract the selected lines directly into memory (no registers altered)
+  let l:lines = getline(a:line1, a:line2)
+  let l:code_context = join(l:lines, "\n")
   
-  " 2. Open a new vertical split (scratch buffer)
+  " 2. Construct the command using your dynamic path
+  let l:script_path = expand('~/vggs')
+  let l:command = l:script_path . ' ' . shellescape(a:prompt)
+  
+  " 3. Run the script silently in the background, passing the code as stdin
+  let l:result = system(l:command, l:code_context)
+  
+  " 4. Open a new vertical scratch split
   vnew
   setlocal buftype=nofile bufhidden=wipe noswapfile
   
-  " 3. Paste the yanked code explicitly from the unnamed register
-  put ""
-  
-  " 4. Remove the empty first line created by 'put'
-  1d
-  
-  " 5. Filter this new buffer through the Bash script using a dynamic path
-  let l:script_path = expand('~/vggs')
-  execute '%!' . l:script_path . ' ' . shellescape(a:prompt)
+  " 5. Populate the new buffer with the Gemini response natively
+  call setline(1, split(l:result, "\n"))
 endfunction
 
 
@@ -827,3 +829,7 @@ function! InsertFunctionHeader()
 endfunction
 
 nnoremap <Leader>ch :call InsertFunctionHeader()<CR>
+highlight Normal guibg=#002b36
+highlight NonText guibg=#002b36
+highlight EndOfBuffer guibg=#002b36
+highlight Visual guifg=#ffffff guibg=#586e75 ctermfg=White ctermbg=DarkGray
